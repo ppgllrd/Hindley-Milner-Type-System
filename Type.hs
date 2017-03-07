@@ -3,7 +3,7 @@
 --
 -- A type inference system for a small functional language
 --
--- Pepe Gallardo, December 1998
+-- Pepe Gallardo, 2017
 --
 --------------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ module Type
   , tupleType
   ) where
 
-import Data.List
+import Data.List(intersperse)
 import qualified Data.Set as Set
 import TypeVarName
 import FreeTypeVars

@@ -3,7 +3,7 @@
 --
 -- A type inference system for a small functional language
 --
--- Pepe Gallardo, December 1998
+-- Pepe Gallardo, 2017
 --
 --------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ import Mon
 import TypeSubst(TypeSubst)
 import qualified TypeSubst
 
--- Most general unificator
+-- Most general unifier
 mgu :: Type -> Type -> Mon TypeSubst
 mgu t1@(TypeVar tvn) t2
   | occurs tvn t2 = if isTypeVar t2 then return TypeSubst.empty
@@ -60,6 +60,7 @@ typeMismatch t1 t2 =
                 , show t2
                 , "Because of type mismatch"
                 ])
+{-
 
 -- Some tests
 test ej = runMon ej
@@ -73,3 +74,5 @@ ej2 = test (mgu (alpha *-> alpha) (alpha))
 
 ej3 = test (mgu boolType (alpha *-> alpha))
   where alpha = TypeVar (typeVarName 0)
+
+-}

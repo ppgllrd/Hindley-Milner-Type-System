@@ -3,7 +3,7 @@
 --
 -- A type inference system for a small functional language
 --
--- Pepe Gallardo, December 1998
+-- Pepe Gallardo, 2017
 --
 --------------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ module Expr
   , Expr(..)
   ) where
 
-import Data.List
+import Data.List(intersperse)
 
 -- Name of a variable
 type VarName = String
@@ -27,9 +27,9 @@ data Expr = ConstB Bool           -- True, False
           | Tuple [Expr]          -- (e1,e2), (e1,e2,e3) , ...
 
 instance Show Expr where
-  showsPrec p (ConstB  b) =
+  showsPrec p (ConstB b) =
     showsPrec p b
-  showsPrec p (ConstI  i) =
+  showsPrec p (ConstI i) =
     showsPrec p i
   showsPrec p (Var vn) =
     showString vn

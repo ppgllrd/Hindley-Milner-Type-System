@@ -3,24 +3,24 @@
 --
 -- A type inference system for a small functional language
 --
--- Pepe Gallardo, December 1998
+-- Pepe Gallardo, 2017
 --
 --------------------------------------------------------------------------------
 
 module TypeVarName
   ( TypeVarName
-  , typeVarName
-  , nextTypeVarName
+  , fromInt
+  , next
   ) where
 
 -- Type Variables
 newtype TypeVarName = MkTypeVarName Int deriving (Eq, Ord)
 
-typeVarName :: Int -> TypeVarName
-typeVarName = MkTypeVarName
+fromInt :: Int -> TypeVarName
+fromInt = MkTypeVarName
 
-nextTypeVarName :: TypeVarName -> TypeVarName
-nextTypeVarName (MkTypeVarName tvn) = MkTypeVarName (tvn + 1)
+next :: TypeVarName -> TypeVarName
+next (MkTypeVarName tvn) = MkTypeVarName (tvn + 1)
 
 instance Show TypeVarName where
   showsPrec p (MkTypeVarName tv) = showString "t" . shows tv

@@ -1,9 +1,9 @@
 --------------------------------------------------------------------------------
--- Functions related to list of assumptions
+-- Functions related to assumption sets
 --
 -- A type inference system for a small functional language
 --
--- Pepe Gallardo, December 1998
+-- Pepe Gallardo, 2017
 --
 --------------------------------------------------------------------------------
 
