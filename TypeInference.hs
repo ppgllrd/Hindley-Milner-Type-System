@@ -9,15 +9,16 @@
 
 module TypeInference(typeOf) where
 
+import qualified Data.Set as Set
 import Expr
 import Type
 import Assumptions(Assumptions)
 import qualified Assumptions
 import Mon
-import FreshInstances
 import TypeSubst(TypeSubst)
 import qualified TypeSubst
 import Unification
+import FreeTypeVars
 
 -- ToDo: extend monad with a reader for assumptions
 
@@ -36,6 +37,12 @@ analyse (Abs vn e)      assump = do
   let newAssump = Assumptions.add vn argType assump
   resType <- analyse e newAssump
   return (argType *-> resType)
+analyse (Let vn e1 e2) assump = do
+  localType <- analyse e1 assump
+  localType' <- generalize localType assump
+  subst <- getCurrentSubst
+  resultType <- analyse e2 (TypeSubst.apply subst $ Assumptions.addPoly vn localType' assump)
+  return resultType
 analyse (Cond e1 e2 e3) assump = do
   testType <- analyse e1 assump
   thenType <- analyse e2 assump
@@ -46,6 +53,23 @@ analyse (Cond e1 e2 e3) assump = do
 analyse (Tuple es)      assump = do
   types <- mapM (\e -> analyse e assump) es
   return (tupleType types)
+
+newTypeInstance :: VarName -> Assumptions -> Mon Type
+newTypeInstance vn assump = do
+  case Assumptions.lookup vn assump of
+    Nothing -> fail ("Free variable "++ vn)
+    Just (Forall tvns t) -> do
+      tvs' <- mapM (const newTypeVar) tvns
+      let subst = foldr (TypeSubst.compose . uncurry TypeSubst.singleton)
+                        TypeSubst.empty (zip tvns tvs')
+      return (TypeSubst.apply subst t)
+
+generalize :: Type -> Assumptions -> Mon PolyType
+generalize t assump = do
+  currSubst <- getCurrentSubst
+  let assump' = TypeSubst.apply currSubst assump
+  let vars = freeTypeVars t `Set.difference` freeTypeVars assump'
+  return (Forall (Set.toList vars) t)
 
 typeOf :: Expr -> Type
 typeOf expr = runMon $ do
@@ -72,3 +96,10 @@ term14 = Abs "f"  $ Abs "x" $ Cond (ConstB True) (Var "f") (App (Var "f") (Var "
 term15 = Abs "f"  $ Abs "x" $ Tuple [ App (Var "f") (Var "x"), App (Var "f") (App (Var "f") (Var "x")) ]
 term16 = Abs "f"  $ Abs "x" $ App (Var "f") (App (Var "f") (Var "x"))
 term17 = Abs "f" $ Tuple [ App (Var "f") (ConstB True), App (Var "f") (ConstI 2) ]
+term18 = Let "f" (Abs "x" (Var "x")) (Tuple [Var "f", App (Var "f") (ConstB True), App (Var "f") (ConstI 1) ] )
+term19 = Abs "f"  (Tuple [Var "f", App (Var "f") (ConstB True), App (Var "f") (ConstI 1) ] )
+
+term20 = Abs "f" $ Abs "x" $ Let "v" (App (Var "f") (Var "x")) (Var "v")
+
+-- Wrong
+term21 = Abs "f" $ Abs "x" $ Let "v" (App (Var "f") (App (Var "f") (Var "x"))) (Var "v")

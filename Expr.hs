@@ -17,13 +17,14 @@ import Data.List
 -- Name of a variable
 type VarName = String
 
-data Expr = ConstB Bool         -- True, False
-          | ConstI Int          -- ..., -1, 0, 1, ...
-          | Var VarName         -- v, ...
-          | App Expr Expr       -- e1 e2
-          | Abs VarName Expr    -- \v -> e
-	        | Cond Expr Expr Expr -- if e1 then e2 else e3
-          | Tuple [Expr]        -- (e1,e2), (e1,e2,e3) , ...
+data Expr = ConstB Bool           -- True, False
+          | ConstI Int            -- ..., -1, 0, 1, ...
+          | Var VarName           -- v, ...
+          | App Expr Expr         -- e1 e2
+          | Abs VarName Expr      -- \v -> e
+          | Let VarName Expr Expr -- let v = e1 in e2
+          | Cond Expr Expr Expr   -- if e1 then e2 else e3
+          | Tuple [Expr]          -- (e1,e2), (e1,e2,e3) , ...
 
 instance Show Expr where
   showsPrec p (ConstB  b) =
@@ -42,6 +43,14 @@ instance Show Expr where
                     . showString vn
                     . showString " -> "
                     . showsPrec p e
+                    )
+  showsPrec p (Let vn e1 e2) =
+    showParen (p>9) ( showString "let "
+                    . showString vn
+                    . showString " = "
+                    . showsPrec 0 e1
+                    . showString " in "
+                    . showsPrec 0 e2
                     )
   showsPrec p (Cond e1 e2 e3) =
     showParen (p>9) ( showString "if "

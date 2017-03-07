@@ -20,6 +20,7 @@ import qualified Data.Set as Set
 import Type
 import Expr
 import FreeTypeVars
+import TypeSubst(Substitutable, apply)
 
 data Binding  = VarName :-> PolyType
 
@@ -46,3 +47,6 @@ lookup vn (MkAs bds) =
 
 instance FreeTypeVars Assumptions where
   freeTypeVars (MkAs bds) = Set.unions [ freeTypeVars poly | vn' :-> poly  <-  bds ]
+
+instance Substitutable Assumptions where
+  apply subst (MkAs bds) = MkAs [ vn :-> apply subst poly | vn :-> poly  <-  bds ]

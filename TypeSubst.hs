@@ -11,6 +11,7 @@ module TypeSubst
   ( TypeSubst
   , empty
   , singleton
+  , Substitutable
   , apply
   , compose
   ) where
