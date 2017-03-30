@@ -16,10 +16,12 @@ module Type
   , boolType
   , intType
   , tupleType
+  , listType
   ) where
 
 import Data.List(intersperse)
 import qualified Data.Set as Set
+import Lex
 import TypeVarName
 import FreeTypeVars
 
@@ -30,22 +32,20 @@ data Type = TypeVar TypeVarName
 data PolyType = Forall [TypeVarName] Type
 
 -- Some standard types
-tkBool  = "Bool"
-tkInt   = "Int"
-tkArrow = "->"
-tkTuple = "*"
-
 boolType :: Type
-boolType = TypeOp tkBool []
+boolType = TypeOp lxBool []
 
 intType :: Type
-intType = TypeOp tkInt []
+intType = TypeOp lxInt []
 
 (*->) :: Type -> Type -> Type
-t1 *-> t2 = TypeOp tkArrow [t1, t2]
+t1 *-> t2 = TypeOp lxArrow [t1, t2]
 
 tupleType :: [Type] -> Type
-tupleType ts = TypeOp tkTuple ts
+tupleType ts = TypeOp lxTuple ts
+
+listType :: Type -> Type
+listType t = TypeOp lxList [t]
 
 instance FreeTypeVars Type where
   freeTypeVars (TypeVar tvn) = Set.singleton tvn
@@ -68,14 +68,21 @@ instance Show Type where
    showsPrec p (TypeVar tvn) = showsPrec p tvn
    showsPrec p (TypeOp op []) = showString op
    showsPrec p (TypeOp op ts)
-    | op == tkArrow = let [t1,t2] = ts
+    | op == lxArrow = let [t1,t2] = ts
                       in showParen (p>9) ( showsPrec 10 t1
-                                         . showChar ' ' . showString tkArrow . showChar ' '
+                                         . showChar ' ' . showString lxArrow . showChar ' '
                                          . showsPrec p t2
                                          )
-    | op == tkTuple = showParen True (foldl1 (.) (intersperse (showString ", ") (map (showsPrec 0) ts)))
+    | op == lxTuple =   showString lxOP
+                      . foldl (.) id (intersperse (showString lxComma . showChar ' ')
+                                        [ showsPrec 0 t | t <- ts ])
+                      . showString lxCP
+    | op == lxList =  let [t] = ts
+                      in   showString lxOL
+                         . showsPrec 0 t
+                         . showString lxCL
     | otherwise     = showParen (p>9) ( showString op
-                                      . showList ts
+                                      . foldl (.) id [ showChar ' ' . showsPrec 10 t | t <- ts ]
                                       )
    showsPrec p _  = error "unknown pattern in showsPrec for Type"
 
@@ -84,7 +91,7 @@ instance Show PolyType where
      showsPrec 0 t
   showsPrec p (Forall tvns t) =
     showParen (p>9) (
-        foldl1 (.) (intersperse (showChar '.') (map (\tvn -> showString "\\/" . showsPrec 0 tvn) tvns))
+        foldl1 (.) (intersperse (showChar '.') [ showString lxForall . showsPrec 0 tvn | tvn <- tvns ])
       . showString ". "
       . showsPrec 0 t
       )

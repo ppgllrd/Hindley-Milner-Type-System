@@ -10,7 +10,9 @@
 module TypeInference(typeOf) where
 
 import qualified Data.Set as Set
+import Lex
 import Expr
+import ExprParser
 import Type
 import Assumptions(Assumptions)
 import qualified Assumptions
@@ -19,6 +21,7 @@ import TypeSubst(TypeSubst)
 import qualified TypeSubst
 import Unification
 import FreeTypeVars
+import qualified TypeVarName
 
 analyse :: Expr -> Mon Type
 analyse (ConstB bool) =
@@ -72,11 +75,16 @@ generalize t = do
   let vars = freeTypeVars t `Set.difference` freeTypeVars assump'
   return (Forall (Set.toList vars) t)
 
-typeOf :: Expr -> Type
-typeOf expr = runMon Assumptions.empty $ do
+typeOf :: Expr -> Mon Type
+typeOf expr = do
   t <- analyse expr
   subst <- getCurrentSubst
   return (TypeSubst.apply subst t)
+
+test :: Expr -> Assumptions -> Type
+test expr assumptions = runMon assumptions $ do
+  typeOf expr
+
 
 -- Examples
 term1 = ConstB True
@@ -102,5 +110,4 @@ term19 = Abs "f"  (Tuple [Var "f", App (Var "f") (ConstB True), App (Var "f") (C
 
 term20 = Abs "f" $ Abs "x" $ Let "v" (App (Var "f") (Var "x")) (Var "v")
 
--- Wrong
 term21 = Abs "f" $ Abs "x" $ Let "v" (App (Var "f") (App (Var "f") (Var "x"))) (Var "v")

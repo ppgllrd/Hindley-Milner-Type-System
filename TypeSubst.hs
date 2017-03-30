@@ -17,6 +17,7 @@ module TypeSubst
   ) where
 
 import Data.List(intersperse)
+import Lex
 import Type
 import TypeVarName
 
@@ -26,7 +27,7 @@ data SingleTypeSubst = Type :/ TypeVarName
 instance Show SingleTypeSubst where
   showsPrec p (t :/ tvName) =
     showParen (p>9) ( shows t
-                    . showString "/"
+                    . showString lxSlash
                     . shows tvName
                     )
 
@@ -37,9 +38,10 @@ newtype TypeSubst = MkTS [SingleTypeSubst]
 
 instance Show TypeSubst where
   showsPrec p (MkTS ss) =
-    showParen (p>9) ( showString "{"
-                    . foldl1 (.) (intersperse (showString ", ") (map (showsPrec 0) ss))
-                    . showString "}"
+    showParen (p>9) ( showString lxOB
+                    . foldl1 (.) (intersperse (showString lxComma . showChar ' ')
+                        (map (showsPrec 0) ss))
+                    . showString lxCB
                     )
 
 -- The id substitution. Maps each type variable to itself:
